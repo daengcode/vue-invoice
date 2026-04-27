@@ -1,0 +1,89 @@
+/* Warm Orange color palette */
+:root {
+  --vt-c-white: #ffffff;
+  --vt-c-white-soft: #fffbf7;
+  --vt-c-white-mute: #f5ede4;
+
+  --vt-c-black: #1a1410;
+  --vt-c-black-soft: #2d2420;
+  --vt-c-black-mute: #3d3530;
+
+  --vt-c-orange: #FF8C42;
+  --vt-c-orange-light: #FFB380;
+  --vt-c-orange-dark: #E67E22;
+
+  --vt-c-divider-light-1: rgba(230, 126, 34, 0.15);
+  --vt-c-divider-light-2: rgba(230, 126, 34, 0.08);
+  --vt-c-divider-dark-1: rgba(255, 140, 66, 0.3);
+  --vt-c-divider-dark-2: rgba(255, 140, 66, 0.2);
+
+  --vt-c-text-light-1: var(--vt-c-orange-dark);
+  --vt-c-text-light-2: rgba(51, 40, 25, 0.7);
+  --vt-c-text-dark-1: var(--vt-c-white);
+  --vt-c-text-dark-2: rgba(255, 235, 210, 0.72);
+}
+
+/* semantic color variables for this project */
+:root {
+  --color-background: var(--vt-c-white);
+  --color-background-soft: var(--vt-c-white-soft);
+  --color-background-mute: var(--vt-c-white-mute);
+
+  --color-border: var(--vt-c-divider-light-2);
+  --color-border-hover: var(--vt-c-divider-light-1);
+
+  --color-heading: var(--vt-c-text-light-1);
+  --color-text: var(--vt-c-text-light-1);
+
+  --section-gap: 160px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: var(--vt-c-black);
+    --color-background-soft: var(--vt-c-black-soft);
+    --color-background-mute: var(--vt-c-black-mute);
+
+    --color-border: var(--vt-c-divider-dark-2);
+    --color-border-hover: var(--vt-c-divider-dark-1);
+
+    --color-heading: var(--vt-c-text-dark-1);
+    --color-text: var(--vt-c-text-dark-2);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+}
+
+
+body {
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-background);
+  transition:
+    color 0.5s,
+    background-color 0.5s;
+  line-height: 1.6;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    sans-serif;
+  font-size: 15px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
