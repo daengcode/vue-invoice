@@ -10,7 +10,9 @@
               :disabled="downloading"
               class="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-primary hover:bg-orange-dark disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span class="hidden sm:inline">{{ downloading ? "Mengunduh..." : "Download PDF" }}</span>
+              <span class="hidden sm:inline">{{
+                downloading ? "Mengunduh..." : "Download PDF"
+              }}</span>
               <span class="sm:hidden">{{ downloading ? "..." : "PDF" }}</span>
             </button>
             <router-link
@@ -41,7 +43,9 @@
 
         <div v-else-if="invoice" class="bg-white shadow rounded-lg">
           <div id="invoice-content" class="p-4 sm:p-8">
-            <div class="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 mb-6 border-b-2 border-gray-200">
+            <div
+              class="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 mb-6 border-b-2 border-gray-200"
+            >
               <!-- Kiri: logo & identitas perusahaan -->
               <div class="flex items-start gap-4">
                 <img
@@ -51,8 +55,8 @@
                 />
                 <div>
                   <h2 class="text-xl font-bold text-gray-900">Catering Hanin Hanif</h2>
-                  <p class="text-gray-600 text-sm mt-1">Jl. Perintis Kemerdekaan No. 12</p>
-                  <p class="text-gray-600 text-sm">Makassar 90245, Sulawesi Selatan</p>
+                  <p class="text-gray-600 text-sm mt-1">Jl. Tamangapa V No. 12345</p>
+                  <p class="text-gray-600 text-sm">Makassar 90235, Sulawesi Selatan</p>
                   <p class="text-gray-600 text-sm mt-1">Telp: (0411) 123-4567</p>
                   <p class="text-gray-600 text-sm">WA: 0812-3456-7890</p>
                 </div>
@@ -94,50 +98,50 @@
             </div>
 
             <div class="overflow-x-auto mb-6">
-            <table class="w-full">
-              <thead>
-                <tr class="bg-gray-50 border-b-2 border-gray-200">
-                  <th class="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase">
-                    No
-                  </th>
-                  <th class="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase">
-                    Item
-                  </th>
-                  <th class="px-4 py-3 text-center text-sm font-medium text-gray-500 uppercase">
-                    Jumlah
-                  </th>
-                  <th class="px-4 py-3 text-right text-sm font-medium text-gray-500 uppercase">
-                    Harga
-                  </th>
-                  <th class="px-4 py-3 text-right text-sm font-medium text-gray-500 uppercase">
-                    Diskon
-                  </th>
-                  <th class="px-4 py-3 text-right text-sm font-medium text-gray-500 uppercase">
-                    Total
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(item, index) in invoice.items"
-                  :key="item.id"
-                  class="border-b border-gray-200"
-                >
-                  <td class="px-4 py-3 text-sm text-gray-900">{{ Number(index) + 1 }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900">{{ item.product_name }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-center">{{ item.quantity }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right">
-                    {{ formatCurrency(item.unit_price) }}
-                  </td>
-                  <td class="px-4 py-3 text-sm text-gray-600 text-right">
-                    {{ item.discount > 0 ? formatCurrency(item.discount) : "-" }}
-                  </td>
-                  <td class="px-4 py-3 text-sm text-gray-900 font-medium text-right">
-                    {{ formatCurrency(item.quantity * item.unit_price - item.discount) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-gray-50 border-b-2 border-gray-200">
+                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase">
+                      No
+                    </th>
+                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase">
+                      Item
+                    </th>
+                    <th class="px-4 py-3 text-center text-sm font-medium text-gray-500 uppercase">
+                      Jumlah
+                    </th>
+                    <th class="px-4 py-3 text-right text-sm font-medium text-gray-500 uppercase">
+                      Harga
+                    </th>
+                    <th class="px-4 py-3 text-right text-sm font-medium text-gray-500 uppercase">
+                      Diskon
+                    </th>
+                    <th class="px-4 py-3 text-right text-sm font-medium text-gray-500 uppercase">
+                      Total
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(item, index) in invoice.items"
+                    :key="item.id"
+                    class="border-b border-gray-200"
+                  >
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ Number(index) + 1 }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ item.product_name }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 text-center">{{ item.quantity }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 text-right">
+                      {{ formatCurrency(item.unit_price) }}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-600 text-right">
+                      {{ item.discount > 0 ? formatCurrency(item.discount) : "-" }}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900 font-medium text-right">
+                      {{ formatCurrency(item.quantity * item.unit_price - item.discount) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -179,7 +183,8 @@
 
             <div class="mt-6 pt-6 border-t border-gray-200">
               <p class="text-sm text-gray-600">
-                <span class="font-medium">Terbilang:</span> {{ numberToWords(Math.max(0, invoice.total - invoice.dp_po)) }}
+                <span class="font-medium">Terbilang:</span>
+                {{ numberToWords(Math.max(0, invoice.total - invoice.dp_po)) }}
               </p>
             </div>
 
