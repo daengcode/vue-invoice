@@ -3,9 +3,9 @@
     <nav class="bg-white shadow">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
-          <h1 class="text-base sm:text-xl font-bold text-gray-900 truncate">Buat Invoice Baru</h1>
+          <h1 class="text-base sm:text-xl font-bold text-gray-900 truncate">{{ pageTitle }}</h1>
           <router-link
-            to="/invoices"
+            :to="backUrl"
             class="flex-shrink-0 ml-4 inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
           >
             Kembali
@@ -16,7 +16,11 @@
 
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div class="px-4 py-6 sm:px-0">
-        <form @submit.prevent="handleSubmit">
+        <div v-if="loadingInvoice" class="text-center py-12">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-primary"></div>
+        </div>
+
+        <form v-else @submit.prevent="handleSubmit">
           <div class="bg-white shadow rounded-lg p-6 mb-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Informasi Invoice</h3>
             
@@ -242,13 +246,39 @@
             </div>
           </div>
 
+          <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Tanda Tangan</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Penjual</label>
+                <input
+                  v-model="form.seller_name"
+                  type="text"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-primary focus:border-orange-primary"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pembeli</label>
+                <input
+                  v-model="form.buyer_name"
+                  type="text"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-primary focus:border-orange-primary"
+                />
+              </div>
+            </div>
+          </div>
+
           <div v-if="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
             {{ error }}
           </div>
 
           <div class="flex justify-end space-x-4">
             <router-link
-              to="/invoices"
+              :to="backUrl"
               class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
             >
               Batal
@@ -258,7 +288,7 @@
               :disabled="loading"
               class="px-6 py-2 border border-transparent rounded-md text-white bg-orange-primary hover:bg-orange-dark disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ loading ? 'Menyimpan...' : 'Simpan' }}
+              {{ loading ? 'Menyimpan...' : submitLabel }}
             </button>
           </div>
         </form>
@@ -268,13 +298,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useInvoices } from '@/composables/useInvoices'
 import type { InvoiceForm, InvoiceItemForm } from '@/types'
 
 const router = useRouter()
-const { createInvoice, generateInvoiceNumber } = useInvoices()
+const route = useRoute()
+const { createInvoice, updateInvoice, fetchInvoice, generateInvoiceNumber } = useInvoices()
+
+const isEditMode = computed(() => route.name === 'invoice-edit')
+const invoiceId = computed(() => route.params.id as string | undefined)
+const pageTitle = computed(() => isEditMode.value ? 'Edit Invoice' : 'Buat Invoice Baru')
+const submitLabel = computed(() => isEditMode.value ? 'Update' : 'Simpan')
+const backUrl = computed(() => isEditMode.value && invoiceId.value ? `/invoices/${invoiceId.value}` : '/invoices')
 
 const form = ref<InvoiceForm>({
   invoice_number: '',
@@ -286,10 +323,13 @@ const form = ref<InvoiceForm>({
   ppn_included: false,
   dp_po: 0,
   credit: 0,
+  seller_name: '',
+  buyer_name: '',
   items: [],
 })
 
 const loading = ref(false)
+const loadingInvoice = ref(false)
 const error = ref('')
 
 function addItem() {
@@ -343,8 +383,13 @@ async function handleSubmit() {
   error.value = ''
 
   try {
-    await createInvoice(form.value)
-    router.push('/invoices')
+    if (isEditMode.value && invoiceId.value) {
+      await updateInvoice(invoiceId.value, form.value)
+      router.push(`/invoices/${invoiceId.value}`)
+    } else {
+      await createInvoice(form.value)
+      router.push('/invoices')
+    }
   } catch (err: unknown) {
     error.value = err instanceof Error ? err.message : 'Gagal menyimpan invoice'
   } finally {
@@ -352,7 +397,55 @@ async function handleSubmit() {
   }
 }
 
-onMounted(() => {
+function toDateTimeLocal(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value.slice(0, 16)
+
+  const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return offsetDate.toISOString().slice(0, 16)
+}
+
+async function loadInvoiceForEdit(id: string) {
+  loadingInvoice.value = true
+  error.value = ''
+
+  try {
+    const invoice = await fetchInvoice(id)
+    form.value = {
+      invoice_number: invoice.invoice_number,
+      invoice_date: toDateTimeLocal(invoice.invoice_date),
+      due_date: invoice.due_date,
+      customer_name: invoice.customer_name,
+      customer_address: invoice.customer_address || '',
+      sales_code: invoice.sales_code || '',
+      ppn_included: invoice.ppn_included,
+      dp_po: Number(invoice.dp_po || 0),
+      credit: Number(invoice.credit || 0),
+      seller_name: invoice.seller_name || '',
+      buyer_name: invoice.buyer_name || '',
+      items: invoice.items.map((item) => ({
+        id: item.id,
+        no_urut: item.no_urut,
+        product_name: item.product_name,
+        quantity: Number(item.quantity),
+        unit: item.unit,
+        unit_price: Number(item.unit_price),
+        discount: Number(item.discount || 0),
+      })),
+    }
+  } catch (err: unknown) {
+    error.value = err instanceof Error ? err.message : 'Gagal memuat invoice'
+  } finally {
+    loadingInvoice.value = false
+  }
+}
+
+onMounted(async () => {
+  if (isEditMode.value && invoiceId.value) {
+    await loadInvoiceForEdit(invoiceId.value)
+    return
+  }
+
   form.value.invoice_number = generateInvoiceNumber()
   addItem()
 })

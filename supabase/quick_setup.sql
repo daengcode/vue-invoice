@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS invoices (
     total NUMERIC(15, 2) DEFAULT 0,
     dp_po NUMERIC(15, 2) DEFAULT 0,
     credit NUMERIC(15, 2) DEFAULT 0,
+    seller_name TEXT DEFAULT '',
+    buyer_name TEXT DEFAULT '',
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

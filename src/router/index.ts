@@ -27,6 +27,18 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/invoices/:id/edit',
+      name: 'invoice-edit',
+      component: () => import('@/views/InvoiceFormView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: () => import('@/views/SettingsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/invoices/:id',
       name: 'invoice-detail',
       component: () => import('@/views/InvoiceDetailView.vue'),

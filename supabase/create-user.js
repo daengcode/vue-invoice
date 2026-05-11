@@ -1,6 +1,5 @@
 /**
- * Create Custom User Script
- * Uses custom users table instead of Supabase Auth
+ * Create Supabase Auth User Script
  *
  * Usage:
  * 1. Make sure .env is configured with your Supabase credentials
@@ -10,7 +9,6 @@
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import readline from "readline";
-import * as bcrypt from "bcryptjs";
 
 dotenv.config();
 
@@ -40,7 +38,7 @@ function question(prompt) {
 }
 
 async function createUser() {
-  console.log("\n📝 Create Custom User for Invoice System\n");
+  console.log("\n📝 Create Supabase Auth User for Invoice System\n");
 
   try {
     // Get user input
@@ -52,59 +50,52 @@ async function createUser() {
 
     console.log("\n⏳ Checking if user exists...");
 
-    // Check if user already exists
-    const { data: existingUser, error: checkError } = await supabase
-      .from("users")
-      .select("id, email")
-      .eq("email", email)
-      .maybeSingle();
+    const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers();
+
+    if (listError) {
+      console.error("❌ Error checking users:", listError.message);
+      rl.close();
+      return;
+    }
+
+    const existingUser = existingUsers.users.find((user) => user.email === email);
 
     if (existingUser) {
       console.log("\n💡 User already exists. You can login with these credentials:");
       console.log(`   Email: ${email}`);
       console.log(`   Password: ${password}`);
+      console.log(`   User ID: ${existingUser.id}`);
       rl.close();
       return;
     }
 
     console.log("\n⏳ Creating user...");
 
-    // Hash password with bcryptjs
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-    // Insert user into custom users table
-    const { data: newUser, error: insertError } = await supabase
-      .from("users")
-      .insert({
-        email: email,
-        password_hash: passwordHash,
+    const { data, error: createError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
         full_name: fullName,
-        role: role,
-        is_active: true,
-      })
-      .select()
-      .single();
+        role,
+      },
+    });
 
-    if (insertError) {
-      console.error("❌ Error creating user:", insertError.message);
+    if (createError) {
+      console.error("❌ Error creating user:", createError.message);
       rl.close();
       return;
     }
+
+    const newUser = data.user;
 
     console.log("\n✅ User created successfully!");
     console.log("\n📋 Login Credentials:");
     console.log(`   Email: ${email}`);
     console.log(`   Password: ${password}`);
     console.log(`   User ID: ${newUser.id}`);
-    console.log(`   Full Name: ${newUser.full_name}`);
-    console.log(`   Role: ${newUser.role}`);
-    console.log(`   Active: ${newUser.is_active ? "Yes" : "No"}`);
-
-    // Debug info
-    console.log("\n🔍 Debug Info:");
-    console.log(`   Password Hash: ${newUser.password_hash}`);
-    console.log(`   Hash Length: ${newUser.password_hash.length}`);
+    console.log(`   Full Name: ${newUser.user_metadata.full_name}`);
+    console.log(`   Role: ${newUser.user_metadata.role}`);
 
     console.log("\n🚀 You can now login at: http://localhost:5173/login");
   } catch (error) {

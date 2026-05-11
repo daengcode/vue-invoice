@@ -11,16 +11,74 @@ DROP POLICY IF EXISTS "Users can insert items to their invoices" ON invoice_item
 DROP POLICY IF EXISTS "Users can update items from their invoices" ON invoice_items;
 DROP POLICY IF EXISTS "Users can delete items from their invoices" ON invoice_items;
 
--- Create new policies (based on custom users table)
--- Note: Since we're using localStorage for session, we'll disable RLS for simplicity
--- In production, you would need to implement proper JWT validation
+-- Re-enable RLS so exposed PostgREST tables are not public.
+-- These policies require Supabase Auth JWTs where auth.uid() matches invoices.user_id.
+-- If you keep custom localStorage auth, move database access behind a trusted server/API
+-- or issue validated JWTs instead of disabling RLS.
 
-ALTER TABLE invoices DISABLE ROW LEVEL SECURITY;
-ALTER TABLE invoice_items DISABLE ROW LEVEL SECURITY;
+ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invoice_items ENABLE ROW LEVEL SECURITY;
 
--- Alternative: If you want to keep RLS, you would need to:
--- 1. Implement JWT token validation
--- 2. Pass user_id in requests
--- 3. Create policies that check the user_id
+CREATE POLICY "Users can view their own invoices"
+    ON invoices FOR SELECT
+    USING (auth.uid() = user_id);
 
--- For now, RLS is disabled - filtering is done in the application layer
+CREATE POLICY "Users can insert their own invoices"
+    ON invoices FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own invoices"
+    ON invoices FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own invoices"
+    ON invoices FOR DELETE
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can view items from their invoices"
+    ON invoice_items FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM invoices
+            WHERE invoices.id = invoice_items.invoice_id
+            AND invoices.user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can insert items to their invoices"
+    ON invoice_items FOR INSERT
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM invoices
+            WHERE invoices.id = invoice_items.invoice_id
+            AND invoices.user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can update items from their invoices"
+    ON invoice_items FOR UPDATE
+    USING (
+        EXISTS (
+            SELECT 1 FROM invoices
+            WHERE invoices.id = invoice_items.invoice_id
+            AND invoices.user_id = auth.uid()
+        )
+    )
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM invoices
+            WHERE invoices.id = invoice_items.invoice_id
+            AND invoices.user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can delete items from their invoices"
+    ON invoice_items FOR DELETE
+    USING (
+        EXISTS (
+            SELECT 1 FROM invoices
+            WHERE invoices.id = invoice_items.invoice_id
+            AND invoices.user_id = auth.uid()
+        )
+    );

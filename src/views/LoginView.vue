@@ -70,19 +70,14 @@ const loading = ref(false);
 async function handleLogin() {
   error.value = "";
   loading.value = true;
-  console.log("=== HANDLE LOGIN ===");
 
   try {
-    console.log("Calling authStore.login...");
     await authStore.login(email.value, password.value);
-    console.log("Login successful, redirecting...");
     const redirect = (route.query.redirect as string) || "/invoices";
     router.push(redirect);
   } catch (err: unknown) {
-    console.error("Login handler caught error:", err);
     const errorMessage = err instanceof Error ? err.message : "Login gagal. Silakan coba lagi.";
     error.value = errorMessage;
-    console.error("Error shown to user:", error.value);
   } finally {
     loading.value = false;
   }

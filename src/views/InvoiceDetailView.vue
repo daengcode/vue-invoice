@@ -5,6 +5,13 @@
         <div class="flex justify-between items-center h-16">
           <h1 class="text-base sm:text-xl font-bold text-gray-900 truncate">Detail Invoice</h1>
           <div class="flex items-center gap-2 flex-shrink-0">
+            <router-link
+              v-if="invoice"
+              :to="`/invoices/${invoice?.id}/edit`"
+              class="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Edit
+            </router-link>
             <button
               @click="downloadPDF"
               :disabled="downloading"
@@ -55,10 +62,9 @@
                 />
                 <div>
                   <h2 class="text-xl font-bold text-gray-900">Catering Hanin Hanif</h2>
-                  <p class="text-gray-600 text-sm mt-1">Jl. Tamangapa V No. 12345</p>
-                  <p class="text-gray-600 text-sm">Makassar 90235, Sulawesi Selatan</p>
-                  <p class="text-gray-600 text-sm mt-1">Telp: (0411) 123-4567</p>
-                  <p class="text-gray-600 text-sm">WA: 0812-3456-7890</p>
+                  <p class="text-gray-600 text-sm mt-1 whitespace-pre-line">{{ settings.store_address }}</p>
+                  <p class="text-gray-600 text-sm mt-1">Telp: {{ settings.phone_number }}</p>
+                  <p class="text-gray-600 text-sm">WA: {{ settings.whatsapp_number }}</p>
                 </div>
               </div>
 
@@ -108,6 +114,9 @@
                       Item
                     </th>
                     <th class="px-4 py-3 text-center text-sm font-medium text-gray-500 uppercase">
+                      Satuan
+                    </th>
+                    <th class="px-4 py-3 text-center text-sm font-medium text-gray-500 uppercase">
                       Jumlah
                     </th>
                     <th class="px-4 py-3 text-right text-sm font-medium text-gray-500 uppercase">
@@ -129,6 +138,7 @@
                   >
                     <td class="px-4 py-3 text-sm text-gray-900">{{ Number(index) + 1 }}</td>
                     <td class="px-4 py-3 text-sm text-gray-900">{{ item.product_name }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 text-center">{{ item.unit }}</td>
                     <td class="px-4 py-3 text-sm text-gray-900 text-center">{{ item.quantity }}</td>
                     <td class="px-4 py-3 text-sm text-gray-900 text-right">
                       {{ formatCurrency(item.unit_price) }}
@@ -192,14 +202,26 @@
               <h3 class="text-sm font-medium text-gray-500 uppercase mb-4">Informasi Pembayaran</h3>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
                 <div>
-                  <p class="text-gray-600">Bank BCA</p>
-                  <p class="font-medium text-gray-900">No. Rek: 123-456-7890</p>
-                  <p class="text-gray-600">a/n Catering Hanin Hanif</p>
+                  <p class="text-gray-600">{{ settings.bank_name }}</p>
+                  <p class="font-medium text-gray-900">No. Rek: {{ settings.account_number }}</p>
+                  <p class="text-gray-600">a/n {{ settings.account_holder_name }}</p>
                 </div>
-                <div>
-                  <p class="text-gray-600">Bank Mandiri</p>
-                  <p class="font-medium text-gray-900">No. Rek: 098-765-4321</p>
-                  <p class="text-gray-600">a/n Catering Hanin Hanif</p>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm mt-8">
+                <div class="text-center">
+                  <p class="text-gray-600">Penjual</p>
+                  <div class="h-16"></div>
+                  <p class="font-medium text-gray-900">
+                    ({{ invoice.seller_name || "-" }})
+                  </p>
+                </div>
+                <div class="text-center">
+                  <p class="text-gray-600">Pembeli</p>
+                  <div class="h-16"></div>
+                  <p class="font-medium text-gray-900">
+                    ({{ invoice.buyer_name || "-" }})
+                  </p>
                 </div>
               </div>
             </div>
@@ -214,12 +236,14 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useInvoices } from "@/composables/useInvoices";
+import { useSettings } from "@/composables/useSettings";
 import type { InvoiceWithItems } from "@/types";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 const route = useRoute();
 const { fetchInvoice, numberToWords } = useInvoices();
+const { settings } = useSettings();
 
 const invoice = ref<InvoiceWithItems | null>(null);
 const loading = ref(false);

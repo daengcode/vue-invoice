@@ -12,6 +12,8 @@ export interface Invoice {
   total: number
   dp_po: number
   credit: number
+  seller_name: string
+  buyer_name: string
   user_id: string
   created_at: string
 }
@@ -42,6 +44,8 @@ export interface InvoiceForm {
   ppn_included: boolean
   dp_po: number
   credit: number
+  seller_name: string
+  buyer_name: string
   items: InvoiceItemForm[]
 }
 
@@ -55,14 +59,11 @@ export interface InvoiceItemForm {
   discount: number
 }
 
-export interface CustomUser {
-  id: string
-  email: string
-  password_hash: string
-  full_name: string
-  role: string
-  is_active: boolean
-  created_at: string
-  updated_at: string
-  last_login_at: string | null
+export interface StoreSettings {
+  store_address: string
+  phone_number: string
+  whatsapp_number: string
+  bank_name: string
+  account_number: string
+  account_holder_name: string
 }

@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS invoices (
     total NUMERIC(15, 2) DEFAULT 0 CHECK (total >= 0),
     dp_po NUMERIC(15, 2) DEFAULT 0 CHECK (dp_po >= 0),
     credit NUMERIC(15, 2) DEFAULT 0 CHECK (credit >= 0),
+    seller_name TEXT DEFAULT '',
+    buyer_name TEXT DEFAULT '',
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -140,6 +142,8 @@ COMMENT ON COLUMN invoices.discount_amount IS 'Total discount amount';
 COMMENT ON COLUMN invoices.total IS 'Final total after discount (subtotal - discount_amount)';
 COMMENT ON COLUMN invoices.dp_po IS 'Down payment / Purchase Order amount';
 COMMENT ON COLUMN invoices.credit IS 'Credit amount remaining to be paid';
+COMMENT ON COLUMN invoices.seller_name IS 'Seller name shown in invoice signature section';
+COMMENT ON COLUMN invoices.buyer_name IS 'Buyer name shown in invoice signature section';
 
 COMMENT ON COLUMN invoice_items.no_urut IS 'Sequence number of the item in the invoice';
 COMMENT ON COLUMN invoice_items.product_name IS 'Name of the product/service';

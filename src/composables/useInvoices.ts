@@ -2,13 +2,16 @@ import { supabase } from '@/lib/supabase'
 import type { Invoice, InvoiceItem, InvoiceForm } from '@/types'
 
 export function useInvoices() {
+  async function getAuthenticatedUserId() {
+    const { data, error } = await supabase.auth.getUser()
+    if (error) throw error
+    if (!data.user) throw new Error('User not authenticated')
+
+    return data.user.id
+  }
+
   async function fetchInvoices() {
-    // Get user from localStorage (custom auth)
-    const userJson = localStorage.getItem('user')
-    if (!userJson) throw new Error('User not authenticated')
-    
-    const customUser = JSON.parse(userJson)
-    const userId = customUser.id
+    const userId = await getAuthenticatedUserId()
 
     const { data, error } = await supabase
       .from('invoices')
@@ -44,12 +47,7 @@ export function useInvoices() {
   }
 
   async function createInvoice(form: InvoiceForm) {
-    // Get user from localStorage (custom auth)
-    const userJson = localStorage.getItem('user')
-    if (!userJson) throw new Error('User not authenticated')
-    
-    const customUser = JSON.parse(userJson)
-    const userId = customUser.id
+    const userId = await getAuthenticatedUserId()
 
     const subtotal = form.items.reduce((sum, item) => sum + (item.quantity * item.unit_price - item.discount), 0)
     const discountAmount = form.items.reduce((sum, item) => sum + item.discount, 0)
@@ -71,6 +69,8 @@ export function useInvoices() {
         total,
         dp_po: form.dp_po,
         credit,
+        seller_name: form.seller_name,
+        buyer_name: form.buyer_name,
         user_id: userId,
       })
       .select()
@@ -93,6 +93,62 @@ export function useInvoices() {
       .from('invoice_items')
       .insert(itemsToInsert)
     
+    if (itemsError) throw itemsError
+
+    return invoice
+  }
+
+  async function updateInvoice(id: string, form: InvoiceForm) {
+    const subtotal = form.items.reduce((sum, item) => sum + (item.quantity * item.unit_price - item.discount), 0)
+    const discountAmount = form.items.reduce((sum, item) => sum + item.discount, 0)
+    const total = subtotal - discountAmount
+    const credit = Math.max(0, total - form.dp_po)
+
+    const { data: invoice, error: invoiceError } = await supabase
+      .from('invoices')
+      .update({
+        invoice_date: form.invoice_date,
+        due_date: form.due_date,
+        customer_name: form.customer_name,
+        customer_address: form.customer_address,
+        sales_code: form.sales_code,
+        ppn_included: form.ppn_included,
+        subtotal,
+        discount_amount: discountAmount,
+        total,
+        dp_po: form.dp_po,
+        credit,
+        seller_name: form.seller_name,
+        buyer_name: form.buyer_name,
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (invoiceError) throw invoiceError
+
+    const { error: deleteItemsError } = await supabase
+      .from('invoice_items')
+      .delete()
+      .eq('invoice_id', id)
+
+    if (deleteItemsError) throw deleteItemsError
+
+    const itemsToInsert = form.items.map((item, index) => ({
+      invoice_id: id,
+      no_urut: index + 1,
+      product_name: item.product_name,
+      quantity: item.quantity,
+      unit: item.unit,
+      unit_price: item.unit_price,
+      discount: item.discount,
+      total: item.quantity * item.unit_price - item.discount,
+    }))
+
+    const { error: itemsError } = await supabase
+      .from('invoice_items')
+      .insert(itemsToInsert)
+
     if (itemsError) throw itemsError
 
     return invoice
@@ -178,6 +234,7 @@ export function useInvoices() {
     fetchInvoices,
     fetchInvoice,
     createInvoice,
+    updateInvoice,
     deleteInvoice,
     generateInvoiceNumber,
     numberToWords,
